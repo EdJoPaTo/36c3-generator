@@ -47,10 +47,6 @@ var simSVG = "";
 //RNG
 var state = new StateSaver();
 
-// for sharing modal
-var modal;
-var span;
-
 window.onload = function() {
 	paper.setup('paperCanvas');
 	
@@ -259,7 +255,6 @@ function setCaption(isNew){
 
 // finish physic simulation
 function stopSimulation(){
-	enableBoxes();
 	simulationRunning=false;
 	view.onFrame = null;
 	endTime = engine.timing.timestamp-startTime;
@@ -283,7 +278,6 @@ function updateText(){
 	if(text.length>0){
 		clearSeed();
 		setAnimationFunction();
-		enableShare();
 		
 		simText = text;
 		pathIsText = true;
@@ -295,7 +289,6 @@ function updateText(){
 function handleFiles(files){
 	clearSeed();
 	setAnimationFunction();
-	disableShare();
 	if(files){
 		uploadedSVG = files[0];
 		simSVG = files[0];
@@ -318,7 +311,6 @@ function clearSeed(){
 
 //reset physic simulation
 function clearSimulation(){
-	disableBoxes();
 	concreteObjects = [];
 	physicObjects = [];
 	physicObjectsAngles = [];
@@ -344,9 +336,6 @@ function clearSimulation(){
 
 //Main Simulation Routine for text
 function simulateText(text, finializeFunc){
-	if(!state.newRNG){
-		animationBoxes();
-	}
 	startTime = engine.timing.timestamp;
 	console.log("startTime: "+startTime);
 	
@@ -750,7 +739,7 @@ function breakPart(path){
 	var parts = [];
 	var brokepath = new Path();
 	var newpath = new Path();
-	
+
 	while(brokepath.segments && brokepath.segments.length<=0){
 		newpath.remove();
 		brokepath.remove();
@@ -1002,60 +991,6 @@ function animateLeaf(leafobject){
 function share(){
 	urlstring = window.location.hostname+"?seed="+state.getSeed()+"&time="+endTime+"&caption="+encodeURIComponent(captionText.toString())+"&text="+encodeURIComponent(simText);
 	console.log(urlstring);
-	var textarea = document.getElementById("sharetext");
-	textarea.value = urlstring;
-	modal.style.display = "block";
-}
-
-//canvas zoom in
-function zoomIn(){
-	paper.view.zoom = paper.view.zoom+0.05;
-}
-
-//canvas zoom out
-function zoomOut(){
-	paper.view.zoom = paper.view.zoom-0.05;
-}
-
-//disable all boxed during replay
-function animationBoxes(){
-	document.getElementById("one").classList.add("disabled");
-	document.getElementById("two").classList.add("disabled");
-	document.getElementById("three").classList.add("disabled");
-	document.getElementById("four").classList.add("disabled");
-	document.getElementById("five").classList.add("disabled");
-}
-
-//enable second phase boxed
-function enableBoxes(){
-	document.getElementById("three").classList.remove("disabled");
-	document.getElementById("four").classList.remove("disabled");
-	document.getElementById("five").classList.remove("disabled");
-	
-	document.getElementById("two").classList.add("disabled");
-	
-	document.getElementById("one").classList.remove("disabled");
-}
-
-//disable second phase boxes
-function disableBoxes(){
-	document.getElementById("three").classList.add("disabled");
-	document.getElementById("four").classList.add("disabled");
-	document.getElementById("five").classList.add("disabled");
-	
-	document.getElementById("two").classList.remove("disabled");
-	
-	document.getElementById("one").classList.remove("disabled");
-}
-
-//disable share button 
-function disableShare(){
-	document.getElementById("shareButton").classList.add("disabled");
-}
-
-//enable share button
-function enableShare(){
-	document.getElementById("shareButton").classList.remove("disabled");
 }
 
 //let user download canvas content as SVG
