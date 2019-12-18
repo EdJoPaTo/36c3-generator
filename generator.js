@@ -1,4 +1,18 @@
-paper.install(window);
+var fs = require('fs');
+
+var Matter = require('matter-js');
+var paper = require('paper-jsdom');
+var opentype = require('opentype.js');
+
+var {StateSaver} = require('./hexhex');
+
+var {
+	Path,
+	Rectangle,
+	Segment
+} = paper;
+
+paper.setup(new paper.Size(1500, 1000));
 
 //timestamp of simulation start and end
 var startTime = 0;
@@ -33,7 +47,6 @@ var Engine = Matter.Engine,
 var engine;
 var runner;
 
-
 //generator state
 var restart = true;
 var simulationRunning = true;
@@ -47,63 +60,49 @@ var simSVG = "";
 //RNG
 var state = new StateSaver();
 
-window.onload = function() {
-	paper.setup('paperCanvas');
-	
+startup();
+
+function startup() {
+	paper.setup(new paper.Size(1500, 1000));
+
 	// create a physics engine
 	engine = Engine.create({
 		enableSleeping: true
 	});
-	
-	// run the engine
-	var runner = Matter.Runner.create({
-		//delta: 1000 / 60,
-		isFixed: true,
-		enabled: true
-	});
-	Matter.Runner.run(runner, engine);
-
-	// run the renderer
-	// uncomment for debugging 
-	//Render.run(render);
 
 	setAnimationFunction();	
 }
 
 //apply physics engine simulation to paper.js animation 
 function setAnimationFunction(view){
-	paper.view.onFrame = function(event){
-		
-		if(restart){
-			clearSimulation();
-			restart = false;
-			if(pathIsText){
-				simulateText(simText, detectSimulationEnd);
-			}else{
-				simulateSVG(uploadedSVG, detectSimulationEnd);
-			}
-		}
-		
-		if(simulationRunning){
-			if(engine.timing.timestamp-startTime < parseFloat(endTime) || endTime == 0){ //slightly noise
-				for(var i = 0; i<concreteObjects.length; i++){
-						//console.log
-					var size = [physicObjects[i].bounds.max.x-physicObjects[i].bounds.min.x, physicObjects[i].bounds.max.y-physicObjects[i].bounds.min.y];
-					var physicbounds = new Rectangle(physicObjects[i].bounds.min, size);
-					if(!physicObjects[i].isSleeping){
-						concreteObjects[i].applyMatrix = true;
-						concreteObjects[i].position = physicbounds.center;
-						concreteObjects[i].rotate( (physicObjects[i].angle - physicObjectsAngles[i]) * (180/Math.PI));
-						physicObjectsAngles[i] = physicObjects[i].angle;	
-					}
-					
+
+	clearSimulation()
+	restart = false;
+
+	if(pathIsText){
+		simulateText(simText, detectSimulationEnd);
+	}else{
+		simulateSVG(uploadedSVG, detectSimulationEnd);
+	}
+}
+
+function paperHandleFrame() {
+	if(simulationRunning){
+		if(engine.timing.timestamp-startTime < parseFloat(endTime) || endTime == 0){ //slightly noise
+			for(var i = 0; i<concreteObjects.length; i++){
+				var size = [physicObjects[i].bounds.max.x-physicObjects[i].bounds.min.x, physicObjects[i].bounds.max.y-physicObjects[i].bounds.min.y];
+				var physicbounds = new Rectangle(physicObjects[i].bounds.min, size);
+				if(!physicObjects[i].isSleeping){
+					concreteObjects[i].applyMatrix = true;
+					concreteObjects[i].position = physicbounds.center;
+					concreteObjects[i].rotate( (physicObjects[i].angle - physicObjectsAngles[i]) * (180/Math.PI));
+					physicObjectsAngles[i] = physicObjects[i].angle;	
 				}
-			}else{
-				console.log("stop");
-				stopSimulation();
-				console.log(endTime-engine.timing.timestamp);
 			}
-			
+		}else{
+			console.log("stop");
+			stopSimulation();
+			console.log(endTime-engine.timing.timestamp);
 		}
 	}
 }
@@ -230,7 +229,11 @@ function setCaption(isNew){
 				var fontpaths = font.getPaths(text,200,groundheight+i*100,100);
 
 				for(var i = 0; i<fontpaths.length; i++){
-					var paperpath = paper.project.importSVG(fontpaths[i].toSVG());
+					var partialSvg = fontpaths[i].toSVG();
+					var fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">${partialSvg}</svg>`
+					var paperpathAll = paper.project.importSVG(fullSvg);
+					var paperpath = paperpathAll.children[0]
+		
 					if(hope){
 						paperpath.fillColor = leafColor;
 					}else{
@@ -256,7 +259,7 @@ function setCaption(isNew){
 // finish physic simulation
 function stopSimulation(){
 	simulationRunning=false;
-	view.onFrame = null;
+	paper.view.onFrame = null;
 	endTime = engine.timing.timestamp-startTime;
 	console.log("Simulation timestamp: "+engine.timing.timestamp);
 	
@@ -317,9 +320,9 @@ function clearSimulation(){
 	captionObjects = [];
 	leaves = [];
 	animatedLeaves = [];
-	project.activeLayer.removeChildren();
-	Matter.World.clear(this.engine.world);
-	Matter.Engine.clear(this.engine);
+	paper.project.activeLayer.removeChildren();
+	Matter.World.clear(engine.world);
+	Matter.Engine.clear(engine);
 	
 	simulationRunning = true;
 	
@@ -359,7 +362,12 @@ function simulateText(text, finializeFunc){
 			//import test as SVG into paper
 			var boundingboxData = fontpaths[i].getBoundingBox();
 			var boundingbox = new Rectangle([boundingboxData.x1, boundingboxData.y1], [boundingboxData.x2-boundingboxData.x1, boundingboxData.y2-boundingboxData.y1]);
-			var paperpath = paper.project.importSVG(fontpaths[i].toSVG());
+
+			var partialSvg = fontpaths[i].toSVG();
+			var fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">${partialSvg}</svg>`
+			var paperpathAll = paper.project.importSVG(fullSvg);
+			var paperpath = paperpathAll.children[0]
+
 			paperpath.fillColor = '#DCDCDC';
 			
 			//paperpath = prepareLetter(paperpath, leanside);
@@ -369,7 +377,6 @@ function simulateText(text, finializeFunc){
 			
 			paperpath.bounds.bottomCenter = [boundingbox.center.x, groundheight-80];
 			crackShapeObject(paperpath);
-	
 		}
 
 		finializeFunc();
@@ -430,6 +437,13 @@ function detectSimulationEnd() {
 	for (var o of physicObjects) {
 		Events.on(o, 'sleepStart sleepEnd', detectAllSleeping);
 	}
+
+	while (simulationRunning) {
+		Engine.update(engine, 1000 / 60)
+		paperHandleFrame()
+	}
+
+	downloadSVG()
 }
 
 function detectAllSleeping() {
@@ -996,25 +1010,6 @@ function share(){
 //let user download canvas content as SVG
 function downloadSVG(){
 	paper.view.update();
-    var svg = project.exportSVG({ asString: true, bounds: 'content' });    
-    var svgBlob = new Blob([svg], {type:"image/svg+xml;charset=utf-8"});
-    var svgUrl = URL.createObjectURL(svgBlob);
-    var downloadLink = document.createElement("a");
-    downloadLink.href = svgUrl;
-    downloadLink.download = simText+".svg";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-}
-
-//let user download canvas content as PNG
-function downloadPNG(){
-	paper.view.update();
-    var canvas = document.getElementById("paperCanvas");
-    var downloadLink = document.createElement("a");
-    downloadLink.href = canvas.toDataURL("image/png;base64");
-    downloadLink.download = simText+'.png';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+  var svg = paper.project.exportSVG({ asString: true, bounds: 'content' });
+	fs.writeFileSync(`output/${simText}.svg`, svg, 'utf8')
 }
