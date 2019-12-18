@@ -16,8 +16,6 @@ var animatedLeaves = [];
 var physicObjects = [];
 var physicObjectsAngles = [];
 var captionObjects = [];
-var crackPoint;
-var mousepos;
 
 //matter.js settings
 var staticFriction = 0.3;
@@ -49,56 +47,12 @@ var simSVG = "";
 //RNG
 var state = new StateSaver();
 
-var url = new URL(window.location.href);
-var seed = url.searchParams.get("seed");
-var eT = url.searchParams.get("time");
-var cT = url.searchParams.get("caption");
-var txt = url.searchParams.get("text");
-
-if(seed){
-	state = new StateSaver(seed);
-}
-if(eT){
-	endTime = parseFloat(eT);
-}
-if(cT){
-	captionText = cT.split(",");
-}
-if(txt){
-	simText = txt;
-}
-
-
-
 // for sharing modal
 var modal;
 var span;
 
 window.onload = function() {
 	paper.setup('paperCanvas');
-	
-	
-	//modal stuff
-	// Get the modal
-	modal = document.getElementById("myModal");
-
-	// Get the <span> element that closes the modal
-	span = document.getElementsByClassName("close")[0];
-
-	// When the user clicks on <span> (x), close the modal
-	span.onclick = function() {
-	modal.style.display = "none";
-	}
-
-	// When the user clicks anywhere outside of the modal, close it
-	window.onclick = function(event) {
-		if (event.target == modal) {
-			modal.style.display = "none";
-		}
-	} 
-	
-	
-	
 	
 	// create a physics engine
 	engine = Engine.create({
@@ -116,38 +70,7 @@ window.onload = function() {
 	// run the renderer
 	// uncomment for debugging 
 	//Render.run(render);
-	
-	//Mouse events for adding cracks
-	view.onMouseDown = function(event) {
-		if(crackPoint){
-			mousepos = event.point;
-		
-			if(!simulationRunning){
-				handleCrack(true, mousepos);
-				
-			}
-			
-		}
-	}
 
-	//update red position dot when mouse is moved
-	view.onMouseMove = function(event) {
-		if(crackPoint){
-			mousepos = event.point;
-		
-			if(!simulationRunning){
-				var o = getClosestPoint(mousepos);
-
-				if(o.point){
-					crackPoint.position = o.point;
-				}
-				
-			}
-		}
-	}
-
-	
-		
 	setAnimationFunction();	
 }
 
@@ -271,7 +194,6 @@ function handleCrack(save, pos){
 					animateLeaf(leaf);
 				}
 			}
-			crackPoint.bringToFront();
 			captionObjects.forEach(function(item){
 				item.bringToFront();
 			});
@@ -431,17 +353,13 @@ function simulateText(text, finializeFunc){
 	opentype.load("BO-Midnight.ttf", function(err, font) {
 		
 		text = text.replace(/\s/g,'');
-		
+
 		var amount, glyph, ctx, x, y, fontSize;
 		if (err) {
 			console.log(err.toString());
 			return;
 		}
 
-		mousepos = [100,100];
-		crackPoint = new Path.Circle([-100,-100],5);
-		crackPoint.fillColor = textColor;
-		
 		var textwidth = font.getAdvanceWidth(text, 500);
 		var fontpaths = font.getPaths(text,(paper.view.viewSize.width-textwidth)/2,0,500);
 
@@ -464,7 +382,6 @@ function simulateText(text, finializeFunc){
 			crackShapeObject(paperpath);
 	
 		}
-		crackPoint.bringToFront();
 
 		finializeFunc();
 	});
@@ -472,13 +389,7 @@ function simulateText(text, finializeFunc){
 
 //main simulation routine for user-defined SVG
 function simulateSVG(svgstring, finializeFunc){
-	mousepos = [100,100];
-	crackPoint = new Path.Circle([100,100],5);
-	crackPoint.fillColor = textColor;
-	
 	var svg = paper.project.importSVG(svgstring,{onLoad: svg => {handleSVG(svg); finializeFunc();}, onError: svgError, insert: true} );
-	
-	crackPoint.bringToFront();
 }
 
 function svgError(err){
@@ -1149,7 +1060,6 @@ function enableShare(){
 
 //let user download canvas content as SVG
 function downloadSVG(){
-	crackPoint.remove();
 	paper.view.update();
     var svg = project.exportSVG({ asString: true, bounds: 'content' });    
     var svgBlob = new Blob([svg], {type:"image/svg+xml;charset=utf-8"});
@@ -1160,12 +1070,10 @@ function downloadSVG(){
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
-	crackPoint.insertAbove(concreteObjects[concreteObjects.length-1]);
 }
 
 //let user download canvas content as PNG
 function downloadPNG(){
-	crackPoint.remove();
 	paper.view.update();
     var canvas = document.getElementById("paperCanvas");
     var downloadLink = document.createElement("a");
@@ -1174,5 +1082,4 @@ function downloadPNG(){
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
-	crackPoint.insertAbove(concreteObjects[concreteObjects.length-1]);
 }
