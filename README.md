@@ -26,4 +26,4 @@ Dont forget to thank bleeptrack for her awesome work. ✨
 
 Then you'll find your output in the output folder.
 
-If you do not need the video / steps in between comment out the `downloadPng(…, false)` line
+If you do not need the video / pictures of steps comment out the `downloadPng(…, false)` line in `generator.js` to increase generation speed
