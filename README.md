@@ -12,13 +12,18 @@ Dont forget to thank bleeptrack for her awesome work. ✨
 
 ## Usage
 
-```sh
-npm install
-npm start
-```
+- Install
+  ```sh
+  npm install
+  ```
 
-Then you'll find your output svg in the output folder.
-(If you need a png you can use inkscapes command line options)
+- Use
 
-To change the text adapt the `generator.js` and search for `"36c3"`.
-That and rerun the script with `npm start`.
+  ```sh
+  ./generate.sh <width> <word>
+  ./generate.sh 4000 bleeptrack
+  ```
+
+Then you'll find your output in the output folder.
+
+If you do not need the video / steps in between comment out the `downloadPng(…, false)` line

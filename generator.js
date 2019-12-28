@@ -53,8 +53,9 @@ var hope = false;
 var pathIsText = true;
 var uploadedSVG;
 var captionText = [];
-var simText = "36c3";
+var simText = process.argv[3] || "36c3";
 var simSVG = "";
+var simWidth = Number(process.argv[2]) || 1500;
 
 //RNG
 var state = new StateSaver();
@@ -62,7 +63,7 @@ var state = new StateSaver();
 startup();
 
 function startup() {
-	paper.setup(new paper.Size(8000, groundheight));
+	paper.setup(new paper.Size(simWidth, groundheight));
 
 	// create a physics engine
 	engine = Engine.create({
