@@ -441,10 +441,13 @@ async function detectSimulationEnd() {
 	fs.mkdirSync('tmp', {recursive: true})
 
 	let i = 0
+	let x = 0
 	while (simulationRunning) {
 		Engine.update(engine, 1000 / 60)
 		paperHandleFrame()
-		await downloadPng(`tmp/${i++}.png`, false)
+		if (x++ % 2 == 0) {
+			await downloadPng(`tmp/${i++}.png`, false)
+		}
 	}
 
 	downloadSVG(`output/${simText}.svg`, true)
