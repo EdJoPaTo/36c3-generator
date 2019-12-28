@@ -3,6 +3,7 @@ var fs = require('fs');
 var Matter = require('matter-js');
 var paper = require('paper-jsdom');
 var opentype = require('opentype.js');
+var sharp = require('sharp');
 
 var {StateSaver} = require('./hexhex');
 
@@ -431,7 +432,7 @@ function addToWorld(path){
 	}
 }
 
-function detectSimulationEnd() {
+async function detectSimulationEnd() {
 	for (var o of physicObjects) {
 		Events.on(o, 'sleepStart sleepEnd', detectAllSleeping);
 	}
@@ -443,10 +444,11 @@ function detectSimulationEnd() {
 	while (simulationRunning) {
 		Engine.update(engine, 1000 / 60)
 		paperHandleFrame()
-		downloadSVG(`tmp/${i++}.svg`, false)
+		await downloadPng(`tmp/${i++}.png`, false)
 	}
 
 	downloadSVG(`output/${simText}.svg`, true)
+	downloadPng(`output/${simText}.png`, true)
 }
 
 function detectAllSleeping() {
@@ -1010,9 +1012,18 @@ function share(){
 	console.log(urlstring);
 }
 
+function createSvgString(onlyContent) {
+	paper.view.update();
+	return paper.project.exportSVG({ asString: true, bounds: onlyContent ? 'content' : 'view' });
+}
+
 //let user download canvas content as SVG
 function downloadSVG(filename, onlyContent){
-	paper.view.update();
-	var svg = paper.project.exportSVG({ asString: true, bounds: onlyContent ? 'content' : 'view' });
+	var svg = createSvgString(onlyContent)
 	fs.writeFileSync(filename, svg, 'utf8')
+}
+
+async function downloadPng(filename, onlyContent) {
+	var svg = createSvgString(onlyContent)
+	await sharp(Buffer.from(svg)).png().toFile(filename)
 }
