@@ -438,12 +438,17 @@ function detectSimulationEnd() {
 		Events.on(o, 'sleepStart sleepEnd', detectAllSleeping);
 	}
 
+	fs.rmdirSync('tmp', {recursive: true})
+	fs.mkdirSync('tmp', {recursive: true})
+
+	let i = 0
 	while (simulationRunning) {
 		Engine.update(engine, 1000 / 60)
 		paperHandleFrame()
+		downloadSVG(`tmp/${i++}.svg`, false)
 	}
 
-	downloadSVG()
+	downloadSVG(`output/${simText}.svg`, true)
 }
 
 function detectAllSleeping() {
@@ -1008,8 +1013,8 @@ function share(){
 }
 
 //let user download canvas content as SVG
-function downloadSVG(){
+function downloadSVG(filename, onlyContent){
 	paper.view.update();
-  var svg = paper.project.exportSVG({ asString: true, bounds: 'content' });
-	fs.writeFileSync(`output/${simText}.svg`, svg, 'utf8')
+	var svg = paper.project.exportSVG({ asString: true, bounds: onlyContent ? 'content' : 'view' });
+	fs.writeFileSync(filename, svg, 'utf8')
 }
