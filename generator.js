@@ -12,8 +12,6 @@ var {
 	Segment
 } = paper;
 
-paper.setup(new paper.Size(1500, 1000));
-
 //timestamp of simulation start and end
 var startTime = 0;
 var endTime = 0;
@@ -35,7 +33,7 @@ var captionObjects = [];
 var staticFriction = 0.3;
 var density = 100;
 var friction = 0.5;
-var groundheight = 800;
+var groundheight = 600;
 var counter = 0;
 
 var Engine = Matter.Engine,
@@ -63,7 +61,7 @@ var state = new StateSaver();
 startup();
 
 function startup() {
-	paper.setup(new paper.Size(1500, 1000));
+	paper.setup(new paper.Size(8000, groundheight));
 
 	// create a physics engine
 	engine = Engine.create({
@@ -325,8 +323,8 @@ function clearSimulation(){
 	Matter.Engine.clear(engine);
 	
 	simulationRunning = true;
-	
-	var ground = Bodies.rectangle(-100, groundheight, 6400, 60, { isStatic: true });
+	const {width} = paper.project.view.viewSize
+	var ground = Bodies.rectangle(-width / 2, groundheight, width * 4, 60, { isStatic: true });
 	ground.frictionStatic = staticFriction;
 	ground.friction = friction;
 	ground.density = density*2;
